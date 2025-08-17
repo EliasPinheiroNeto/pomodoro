@@ -9,8 +9,6 @@ export async function validateDependencies(): Promise<boolean> {
     { cmd: 'paplay --version', name: 'paplay (pulseaudio-utils)' }
   ];
 
-  console.log('🔍 Verificando dependências...');
-
   for (const dep of dependencies) {
     try {
       await execAsync(dep.cmd);
@@ -22,7 +20,5 @@ export async function validateDependencies(): Promise<boolean> {
     }
   }
 
-  console.log('✅ Todas as dependências encontradas!');
-  console.log('🍅 Iniciando Pomodoro Timer...\n');
   return true;
 }

@@ -6,10 +6,11 @@ import { join } from "node:path";
 import blessed from "blessed";
 import { validateDependencies } from "./validator";
 import { BEEP } from "./beep";
+import { before } from "node:test";
 
 const execAsync = promisify(exec);
-const POMODORO_TIME = 1500;
-const BREAK_TIME = 300;
+const POMODORO_TIME = 10;
+const BREAK_TIME = 10;
 
 // Criar arquivo temporário de beep
 const tempBeepFile = join(tmpdir(), 'pomodoro-beep.mp3');
@@ -20,6 +21,8 @@ class PomodoroApp {
   private screen: blessed.Widgets.Screen;
   private mainBox: blessed.Widgets.BoxElement;
   private statusIndicator: blessed.Widgets.BoxElement;
+  private commands: blessed.Widgets.BoxElement;
+
   private currentState = PomodoroState.WORK;
   private timeRemaining = POMODORO_TIME;
   private timerInterval?: NodeJS.Timeout;
@@ -37,15 +40,21 @@ class PomodoroApp {
       style: { fg: 'yellow' }
     });
     this.mainBox = blessed.box({
-      top: 'center', left: 'center', width: 60, height: 8,
+      top: 'center', left: 'center', width: 60, height: 9,
       border: { type: 'line' },
       style: { border: { fg: 'cyan' } },
       label: ' POMODORO ',
       align: 'center', valign: 'middle'
     });
+    this.commands = blessed.box({
+      bottom: 0, left: 0, width: 60, height: 1,
+      content: 'Espaço: play/pause | Q/Esc: sair | R: reiniciar ciclo',
+      style: { fg: 'gray' }
+    });
 
     this.screen.append(this.statusIndicator);
     this.screen.append(this.mainBox);
+    this.screen.append(this.commands);
     this.setupEventHandlers();
     this.updateDisplay();
   }
@@ -62,6 +71,7 @@ class PomodoroApp {
   private setupEventHandlers() {
     this.screen.key(['space'], () => this.toggleTimer());
     this.screen.key(['q', 'escape', 'C-c'], () => this.cleanup());
+    this.screen.key(['r'], () => this.resetCycle());
     this.screen.render();
   }
 
@@ -102,8 +112,23 @@ class PomodoroApp {
     this.updateDisplay();
   }
 
+  private async resetCycle() {
+    if (this.isRunning) {
+      this.isRunning = false;
+
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = undefined;
+      }
+    }
+
+    this.timeRemaining = POMODORO_TIME;
+    this.currentState = PomodoroState.WORK;
+    this.updateDisplay();
+  }
+
   private async tick() {
-    if (--this.timeRemaining <= 0) {
+    if (this.timeRemaining-- <= 0) {
       this.isRunning = false;
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
@@ -147,7 +172,7 @@ class PomodoroApp {
     const statusText = this.isRunning ? "RODANDO" : "PAUSADO";
 
     this.statusIndicator.setContent(`${statusEmoji} ${statusText}`);
-    this.mainBox.setContent(`\n${this.currentState}\n\n${timeStr}\n\nCiclos: ${this.cycleCount}\n\nEspaço: play/pause | Q/Esc: sair`);
+    this.mainBox.setContent(`\n${this.currentState}\n\n${timeStr}\n\nCiclos: ${this.cycleCount}\n`);
     this.screen.render();
   }
 
