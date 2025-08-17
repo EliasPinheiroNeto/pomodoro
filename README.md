@@ -1,4 +1,4 @@
-# 🍅 Pomodoro Timer com Controle de Música
+# 🍅 # Pomodoro Timer
 
 Um timer Pomodoro simples e eficiente que controla automaticamente a música do seu PC durante os ciclos de trabalho e descanso. Projeto feito inteiramente em Vibe Coding, dei apenas o suporte necessário para a AI trabalhar, corrigindo poucas linhas.
 
@@ -29,7 +29,7 @@ sudo apt install playerctl pulseaudio-utils
 
 ### Método 1: Executável Pré-compilado (Recomendado)
 
-1. **Baixe o executável** (quando disponível):
+1. **Baixe o executável**:
 
 ```bash
 # Baixe o arquivo pomodoro-linux

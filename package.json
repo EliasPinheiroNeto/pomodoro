@@ -9,7 +9,10 @@
     "start": "node dist/index.js",
     "dev": "npm run build && npm start",
     "package": "npm run build && pkg dist/index.js --targets node18-linux-x64 --output pomodoro-linux --config package.json",
-    "package-all": "npm run build && pkg dist/index.js --targets node18-linux-x64,node18-win-x64,node18-macos-x64 --output pomodoro --config package.json"
+    "package-all": "npm run build && pkg dist/index.js --targets node18-linux-x64,node18-win-x64,node18-macos-x64 --output pomodoro --config package.json",
+    "package-windows": "npm run build && pkg dist/index.js --targets node18-win-x64 --output pomodoro-win.exe --config package.json",
+    "package-macos": "npm run build && pkg dist/index.js --targets node18-macos-x64 --output pomodoro-macos --config package.json",
+    "package-linux": "npm run build && pkg dist/index.js --targets node18-linux-x64 --output pomodoro-linux --config package.json"
   },
   "pkg": {
     "assets": [
@@ -19,7 +22,9 @@
       "dist/**/*.js"
     ],
     "targets": [
-      "node18-linux-x64"
+      "node18-linux-x64",
+      "node18-win-x64",
+      "node18-macos-x64"
     ]
   },
   "dependencies": {
@@ -28,6 +33,7 @@
   "devDependencies": {
     "@types/blessed": "^0.1.25", 
     "@types/node": "^20.0.0",
+    "pkg": "^5.8.1",
     "typescript": "^5.0.0"
   }
 }
