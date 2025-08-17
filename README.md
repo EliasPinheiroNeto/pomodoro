@@ -1,6 +1,6 @@
 # 🍅 Pomodoro Timer com Controle de Música
 
-Um timer Pomodoro simples e eficiente que controla automaticamente a música do seu PC durante os ciclos de trabalho e descanso.
+Um timer Pomodoro simples e eficiente que controla automaticamente a música do seu PC durante os ciclos de trabalho e descanso. Projeto feito inteiramente em Vibe Coding, dei apenas o suporte necessário para a AI trabalhar, corrigindo poucas linhas.
 
 ## 💡 Motivação
 
