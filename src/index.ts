@@ -1,19 +1,16 @@
-import { exec } from "node:child_process";
-import { promisify } from "node:util";
 import { writeFileSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import blessed from "blessed";
 import { validateDependencies } from "./validator";
 import { BEEP } from "./beep";
-import { before } from "node:test";
+import { createSystemUtils, SystemUtils } from "./systemUtils";
 
-const execAsync = promisify(exec);
-const POMODORO_TIME = 10;
-const BREAK_TIME = 10;
+const POMODORO_TIME = 1500;
+const BREAK_TIME = 300;
 
 // Criar arquivo temporário de beep
-const tempBeepFile = join(tmpdir(), 'pomodoro-beep.mp3');
+const tempBeepFile = join(tmpdir(), 'pomodoro-beep.wav');
 
 enum PomodoroState { WORK = "TRABALHO", BREAK = "INTERVALO" }
 
@@ -28,8 +25,11 @@ class PomodoroApp {
   private timerInterval?: NodeJS.Timeout;
   private isRunning = false;
   private cycleCount = 0;
+  private systemUtils: SystemUtils;
 
   constructor() {
+    this.systemUtils = createSystemUtils();
+
     // Criar arquivo temporário de beep
     this.createTempBeepFile();
 
@@ -47,8 +47,8 @@ class PomodoroApp {
       align: 'center', valign: 'middle'
     });
     this.commands = blessed.box({
-      bottom: 0, left: 0, width: 60, height: 1,
-      content: 'Espaço: play/pause | Q/Esc: sair | R: reiniciar ciclo',
+      bottom: 0, left: 0, width: '100%', height: 1,
+      content: 'Espaço: play/pause | Q/Esc: sair | R: reiniciar ciclo (Não para a música)',
       style: { fg: 'gray' }
     });
 
@@ -75,10 +75,6 @@ class PomodoroApp {
     this.screen.render();
   }
 
-  private async execCommand(command: string) {
-    try { await execAsync(command); } catch { }
-  }
-
   start() {
     this.screen.render();
   }
@@ -92,7 +88,7 @@ class PomodoroApp {
 
     this.isRunning = true;
     if (this.currentState === PomodoroState.WORK) {
-      this.execCommand('playerctl play');
+      await this.systemUtils.playMusic();
     }
     this.timerInterval = setInterval(() => this.tick(), 1000);
     this.updateDisplay();
@@ -107,7 +103,7 @@ class PomodoroApp {
       this.timerInterval = undefined;
     }
     if (this.currentState === PomodoroState.WORK) {
-      this.execCommand('playerctl pause');
+      await this.systemUtils.pauseMusic();
     }
     this.updateDisplay();
   }
@@ -142,9 +138,9 @@ class PomodoroApp {
   private async switchState() {
     // Pausa música atual e toca beep
     if (this.currentState === PomodoroState.WORK) {
-      await this.execCommand('playerctl pause');
+      await this.systemUtils.pauseMusic();
     }
-    await this.execCommand(`paplay ${tempBeepFile}`);
+    await this.systemUtils.playBeep(tempBeepFile);
 
     // Alterna estado
     if (this.currentState === PomodoroState.WORK) {
@@ -154,7 +150,7 @@ class PomodoroApp {
     } else {
       this.currentState = PomodoroState.WORK;
       this.timeRemaining = POMODORO_TIME;
-      await this.execCommand('playerctl play');
+      await this.systemUtils.playMusic();
     }
 
     // Auto-restart timer
@@ -178,7 +174,7 @@ class PomodoroApp {
 
   private cleanup() {
     if (this.timerInterval) clearInterval(this.timerInterval);
-    this.execCommand('playerctl stop');
+    this.systemUtils.stopMusic();
 
     // Remover arquivo temporário
     try {
