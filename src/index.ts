@@ -1,11 +1,18 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
+import { writeFileSync, unlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import blessed from "blessed";
 import { validateDependencies } from "./validator";
+import { BEEP } from "./beep";
 
 const execAsync = promisify(exec);
 const POMODORO_TIME = 1500;
 const BREAK_TIME = 300;
+
+// Criar arquivo temporário de beep
+const tempBeepFile = join(tmpdir(), 'pomodoro-beep.mp3');
 
 enum PomodoroState { WORK = "TRABALHO", BREAK = "INTERVALO" }
 
@@ -20,6 +27,9 @@ class PomodoroApp {
   private cycleCount = 0;
 
   constructor() {
+    // Criar arquivo temporário de beep
+    this.createTempBeepFile();
+
     this.screen = blessed.screen({ smartCSR: true, title: 'Pomodoro Timer' });
     this.statusIndicator = blessed.box({
       top: 0, left: 0, width: 20, height: 3,
@@ -38,6 +48,15 @@ class PomodoroApp {
     this.screen.append(this.mainBox);
     this.setupEventHandlers();
     this.updateDisplay();
+  }
+
+  private createTempBeepFile() {
+    try {
+      const beepBuffer = Buffer.from(BEEP, 'base64');
+      writeFileSync(tempBeepFile, beepBuffer);
+    } catch (error) {
+      console.error('Erro ao criar arquivo temporário de beep:', error);
+    }
   }
 
   private setupEventHandlers() {
@@ -100,7 +119,7 @@ class PomodoroApp {
     if (this.currentState === PomodoroState.WORK) {
       await this.execCommand('playerctl pause');
     }
-    await this.execCommand('paplay src/assets/beep-beep.mp3');
+    await this.execCommand(`paplay ${tempBeepFile}`);
 
     // Alterna estado
     if (this.currentState === PomodoroState.WORK) {
@@ -135,6 +154,14 @@ class PomodoroApp {
   private cleanup() {
     if (this.timerInterval) clearInterval(this.timerInterval);
     this.execCommand('playerctl stop');
+
+    // Remover arquivo temporário
+    try {
+      unlinkSync(tempBeepFile);
+    } catch (error) {
+      // Ignora erro se arquivo não existir
+    }
+
     setTimeout(() => process.exit(0), 200);
   }
 }

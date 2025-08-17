@@ -6,8 +6,7 @@ const execAsync = promisify(exec);
 export async function validateDependencies(): Promise<boolean> {
   const dependencies = [
     { cmd: 'playerctl --version', name: 'playerctl' },
-    { cmd: 'paplay --version', name: 'paplay (pulseaudio-utils)' },
-    { cmd: 'ls src/assets/beep-beep.mp3', name: 'arquivo de áudio beep-beep.mp3' }
+    { cmd: 'paplay --version', name: 'paplay (pulseaudio-utils)' }
   ];
 
   console.log('🔍 Verificando dependências...');
@@ -19,7 +18,6 @@ export async function validateDependencies(): Promise<boolean> {
       console.error(`❌ Dependência não encontrada: ${dep.name}`);
       console.error(`\nPara instalar as dependências no Ubuntu/Debian:`);
       console.error(`sudo apt install playerctl pulseaudio-utils`);
-      console.error(`\nCertifique-se também que o arquivo beep-beep.mp3 está em src/assets/`);
       return false;
     }
   }
